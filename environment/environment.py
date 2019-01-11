@@ -15,3 +15,6 @@ class Environment():
 
     def get_current_lives(self):
         raise NotImplementedError
+
+    def ignore_frame(self):
+        raise NotImplementedError

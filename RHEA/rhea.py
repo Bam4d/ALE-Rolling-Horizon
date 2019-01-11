@@ -4,7 +4,7 @@ import numpy as np
 class RollingHorizonEvolutionaryAlgorithm():
 
     def __init__(self, rollout_actions_length, environment, mutation_probability, num_evals, use_shift_buffer=True,
-                 flip_at_least_one=True, discount_factor=None, ):
+                 flip_at_least_one=True, discount_factor=None, ignore_frames=0):
         self._rollout_actions_length = rollout_actions_length
         self._environment = environment
         self._use_shift_buffer = use_shift_buffer
@@ -12,6 +12,7 @@ class RollingHorizonEvolutionaryAlgorithm():
         self._mutation_probability = mutation_probability
         self._discount_factor = discount_factor
         self._num_evals = num_evals
+        self._ignore_frames = ignore_frames
 
         # Initialize the solution to a random sequence
         if self._use_shift_buffer:
@@ -39,7 +40,7 @@ class RollingHorizonEvolutionaryAlgorithm():
             else:
                 mutated_solution = self._mutate(solution, self._mutation_probability)
 
-            mutated_score = self._environment.evaluate_rollout(mutated_solution, self._discount_factor)
+            mutated_score = self._environment.evaluate_rollout(mutated_solution, self._discount_factor, self._ignore_frames)
             if mutated_score > best_score_in_evaluations:
                 solution = mutated_solution
                 best_score_in_evaluations = mutated_score
@@ -96,6 +97,9 @@ class RollingHorizonEvolutionaryAlgorithm():
         while not self._environment.is_game_over():
             action = self._get_next_action()
             self._environment.perform_action(action)
+
+            for _ in range(self._ignore_frames):
+                self._environment.perform_action(action)
 
             score = self._environment.get_current_score()
             lives = self._environment.get_current_lives()

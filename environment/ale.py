@@ -12,7 +12,7 @@ class ALEEnvironment(Environment):
     def __init__(self, rom_name, visible=True):
         super().__init__('Arcade Learning Environment')
 
-        frame_skip = 20
+        frame_skip = 0
 
         self._ale = ALEInterface()
         self._ale_sampler = ALEInterface()
@@ -28,7 +28,7 @@ class ALEEnvironment(Environment):
         self._action_space = self._ale.getLegalActionSet()
         self._current_score = 0
 
-    def evaluate_rollout(self, solution, discount_factor=0):
+    def evaluate_rollout(self, solution, discount_factor=0, ignore_frames=0):
         #temp_state = self._ale.cloneState()
 
         temp_ale = self._ale.encodeState(self._ale.cloneState())
@@ -39,7 +39,10 @@ class ALEEnvironment(Environment):
         total_rollout_reward = 0
         discount = 1
         for action in solution:
-            rollout_reward = self._ale_sampler.act(action)
+            rollout_reward = 0
+            rollout_reward += self._ale_sampler.act(action)
+            for _ in range(ignore_frames):
+                rollout_reward += self._ale_sampler.act(action)
 
             if discount_factor is not None:
                 rollout_reward *= discount
@@ -60,6 +63,9 @@ class ALEEnvironment(Environment):
         reward = self._ale.act(action)
         self._current_score += reward
 
+    def ignore_frame(self):
+        self._ale.act(0)
+
     def get_current_score(self):
         return self._current_score
 
@@ -71,3 +77,5 @@ class ALEEnvironment(Environment):
 
     def is_game_over(self):
         return self._ale.game_over()
+
+
